@@ -1,0 +1,38 @@
+name: Blocking does not work on my phone
+description: Messenger labels differ between versions and languages. Share yours so the detection rules can be updated.
+labels: [calibration]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks! Please turn on **Debug mode** in DoomStop, run `adb logcat -s DoomStop`,
+        tap the Facebook icon in Messenger and paste the relevant lines below.
+        **Remove any chat content** before posting: debug dumps can include message text.
+  - type: input
+    id: device
+    attributes:
+      label: Phone and Android version
+      placeholder: Samsung Galaxy S24, Android 15 (One UI 7)
+    validations:
+      required: true
+  - type: input
+    id: messenger
+    attributes:
+      label: Messenger version and app language
+      placeholder: 512.0.0.42.109, Polish
+    validations:
+      required: true
+  - type: textarea
+    id: click
+    attributes:
+      label: CLICK line after tapping the Facebook icon
+      description: The line that starts with `CLICK labels=`.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: dump
+    attributes:
+      label: DUMP of the screen that opened (optional)
+      description: Lines between `===== DUMP` and `===== END DUMP =====`, with chat content removed.
+      render: text

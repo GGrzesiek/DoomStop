@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">DoomStop</string>
+    <string name="service_name">DoomStop: block Facebook in Messenger</string>
+    <string name="service_description">Detects when you go from Messenger to Facebook and immediately takes you back to your chats. The app has no internet access and sends nothing anywhere.</string>
+    <string name="blocked_toast">Facebook blocked, back to your chats</string>
+
+    <string name="subtitle">Block Facebook inside Messenger</string>
+
+    <string name="status_on_title">Blocking is on</string>
+    <string name="status_on_desc">Opening Facebook from Messenger is blocked.</string>
+    <string name="status_off_title">Blocking is off</string>
+    <string name="status_off_desc">Turn on the DoomStop service in Accessibility settings.</string>
+    <string name="open_settings">Accessibility settings</string>
+
+    <string name="section_settings">Settings</string>
+    <string name="block_fb_app">Block the whole Facebook app</string>
+    <string name="block_fb_app_desc">Also kicks you out of the Facebook app when you open it directly, not only from Messenger.</string>
+    <string name="debug_mode">Debug mode</string>
+    <string name="debug_mode_desc">Dumps Messenger screen labels to logcat. Includes chat content, so turn it off after calibration.</string>
+
+    <string name="section_how">How it works</string>
+    <string name="how_it_works">When you tap the Facebook icon in Messenger, or facebook.com opens in the Messenger browser, DoomStop closes it and you are back in your chats. The app has no internet access and sends nothing anywhere.</string>
+</resources>

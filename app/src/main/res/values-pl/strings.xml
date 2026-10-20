@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="service_name">DoomStop – blokada Facebooka w Messengerze</string>
+    <string name="service_description">Wykrywa przejście z Messengera do Facebooka i od razu cofa do czatów. Aplikacja nie ma dostępu do internetu i niczego nie wysyła.</string>
+    <string name="blocked_toast">Facebook zablokowany – wracasz do czatów</string>
+
+    <string name="subtitle">Blokada Facebooka w Messengerze</string>
+
+    <string name="status_on_title">Blokada aktywna</string>
+    <string name="status_on_desc">Wejście do Facebooka z Messengera jest blokowane.</string>
+    <string name="status_off_title">Blokada wyłączona</string>
+    <string name="status_off_desc">Włącz usługę DoomStop w ustawieniach dostępności.</string>
+    <string name="open_settings">Ustawienia dostępności</string>
+
+    <string name="section_settings">Ustawienia</string>
+    <string name="block_fb_app">Blokuj całą aplikację Facebook</string>
+    <string name="block_fb_app_desc">Wyrzuca z aplikacji Facebook także wtedy, gdy otworzysz ją bezpośrednio, a nie z Messengera.</string>
+    <string name="debug_mode">Tryb debug</string>
+    <string name="debug_mode_desc">Zrzuca etykiety ekranu Messengera do logcat. Zawiera treść czatów – wyłącz po kalibracji.</string>
+
+    <string name="section_how">Jak to działa</string>
+    <string name="how_it_works">Gdy klikniesz ikonę Facebooka w Messengerze albo w przeglądarce Messengera otworzy się facebook.com, DoomStop ją zamyka i wracasz do czatów. Aplikacja nie ma dostępu do internetu i niczego nie wysyła.</string>
+</resources>
