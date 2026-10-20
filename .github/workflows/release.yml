@@ -1,0 +1,123 @@
+name: Release
+
+# Push a tag like v1.2.3 (or v1.2.3-rc.1 for a pre-release) to publish a signed APK.
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: write # needed to create the GitHub Release
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Signed release APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Check signing secrets
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          missing=0
+          for name in KEYSTORE_BASE64 KEYSTORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Repository secret $name is not set. See docs/RELEASING.md."
+              missing=1
+            fi
+          done
+          exit "$missing"
+
+      - name: Derive version from tag
+        id: version
+        run: |
+          name="${GITHUB_REF_NAME#v}"            # v1.2.3-rc.1 -> 1.2.3-rc.1
+          core="${name%%-*}"                     # 1.2.3-rc.1  -> 1.2.3
+          IFS=. read -r major minor patch <<< "$core"
+          if ! [[ "$major" =~ ^[0-9]+$ && "$minor" =~ ^[0-9]+$ && "$patch" =~ ^[0-9]+$ ]]; then
+            echo "::error::Tag $GITHUB_REF_NAME is not semver (expected vMAJOR.MINOR.PATCH)."
+            exit 1
+          fi
+          # Monotonic versionCode: 1.2.3 -> 10203 (minor and patch up to 99).
+          code=$(( major * 10000 + minor * 100 + patch ))
+          prerelease=false
+          [[ "$name" == *-* ]] && prerelease=true
+          {
+            echo "name=$name"
+            echo "code=$code"
+            echo "prerelease=$prerelease"
+          } >> "$GITHUB_OUTPUT"
+          echo "Version $name (versionCode $code, prerelease: $prerelease)"
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v5
+
+      - name: Decode keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        # tr strips CR/LF/spaces that sneak in when the secret is pasted from Windows.
+        run: printf '%s' "$KEYSTORE_BASE64" | tr -d '\r\n ' | base64 --decode > "$RUNNER_TEMP/release.jks"
+
+      - name: Test and build signed APK
+        env:
+          DOOMSTOP_KEYSTORE_PATH: ${{ runner.temp }}/release.jks
+          DOOMSTOP_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          DOOMSTOP_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          DOOMSTOP_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          VERSION_NAME: ${{ steps.version.outputs.name }}
+          VERSION_CODE: ${{ steps.version.outputs.code }}
+        run: |
+          ./gradlew testReleaseUnitTest assembleRelease \
+            -PversionName="$VERSION_NAME" \
+            -PversionCode="$VERSION_CODE"
+
+      - name: Verify signature and prepare assets
+        id: assets
+        env:
+          VERSION: ${{ steps.version.outputs.name }}
+        run: |
+          apk=app/build/outputs/apk/release/app-release.apk
+          if [ ! -f "$apk" ]; then
+            echo "::error::Signed APK not found. Outputs:"
+            find app/build/outputs/apk/release -maxdepth 1 -type f
+            exit 1
+          fi
+          build_tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)"
+          apksigner="$build_tools/apksigner"
+          "$apksigner" verify --verbose --print-certs "$apk"
+
+          mkdir -p dist
+          out="dist/doomstop-$VERSION.apk"
+          cp "$apk" "$out"
+          (cd dist && sha256sum "doomstop-$VERSION.apk" > "doomstop-$VERSION.apk.sha256")
+          ls -l dist
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.name }}
+          PRERELEASE: ${{ steps.version.outputs.prerelease }}
+        run: |
+          flags=(--title "DoomStop $VERSION" --generate-notes --verify-tag)
+          [ "$PRERELEASE" = "true" ] && flags+=(--prerelease)
+          gh release create "$GITHUB_REF_NAME" dist/* "${flags[@]}"
+
+      - name: Remove keystore
+        if: always()
+        run: rm -f "$RUNNER_TEMP/release.jks"
